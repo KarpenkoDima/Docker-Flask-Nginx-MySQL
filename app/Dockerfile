@@ -2,21 +2,21 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependency
-RUN apt-get update && apt-get install -y
+# Установка системных зависимостей
+RUN apt-get update && apt-get install -y \
     gcc \
     default-libmysqlclient-dev \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy and install Python dependency
-COPY requirements.txt
+# Копирование и установка Python зависимостей
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Копирование кода приложения
 COPY . .
 
-# Create unprivileged user
+# Создание непривилегированного пользователя
 RUN useradd -m -s /bin/bash appuser && chown -R appuser:appuser /app
 USER appuser
 
