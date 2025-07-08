@@ -93,7 +93,7 @@ docker build -t my-nginx ./nginx/
 docker run -d \
   --name nginx-container \
   --network myapp-network \
-  -p 80:80 \
+  -p 8080:8080 \
   my-nginx
 
 # Проверяем логи
