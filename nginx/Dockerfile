@@ -7,8 +7,8 @@ COPY nginx.conf /etc/nginx/nginx.conf
 RUN mkdir -p /var/www/static
 
 # Create unprivileged user
-№RUN addgroup -g 1001 -S nginxгыук && \
-№    adduser -S -D -H -u 1001 -h /var/cache/nginx -s /sbin/nologin -G nginxuser -g
+# RUN addgroup -g 1001 -S ngonxuser && \
+#    adduser -S -D -H -u 1001 -h /var/cache/nginx -s /sbin/nologin -G nginxuser -g
 
 # rights configuration
 RUN chown -R nginx:nginx /var/cache/nginx && \
