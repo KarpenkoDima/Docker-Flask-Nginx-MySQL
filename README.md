@@ -1,49 +1,161 @@
-# Docker: Flask + Nginx + MySQL - Полная ручная настройка
-## Учебный проект
+<div align="center">
+
+# Docker: Flask + Nginx + MySQL
+
+**Трёхуровневое веб-приложение в Docker-контейнерах**
+
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Flask](https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![Nginx](https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white)](https://nginx.org/)
+[![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Python](https://img.shields.io/badge/Python_3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
+
+---
+
+*Учебный проект, демонстрирующий контейнеризацию микросервисной архитектуры*
+
+</div>
+
+## Архитектура
+
+```
+                  ┌─────────────────────────────────────────────┐
+                  │              Docker Network                  │
+                  │           (myapp-network)                    │
+                  │                                             │
+ Client ──────►  │  ┌─────────┐    ┌─────────┐    ┌─────────┐ │
+  :8080          │  │  Nginx  │───►│  Flask  │───►│  MySQL  │ │
+                  │  │  :8080  │    │  :5000  │    │  :3306  │ │
+                  │  └─────────┘    └─────────┘    └─────────┘ │
+                  │   reverse        REST API       database    │
+                  │   proxy                                     │
+                  └─────────────────────────────────────────────┘
+```
+
 ## Структура проекта
 
 ```
-docker-project/
+Docker-Flask-Nginx-MySQL/
 ├── app/
-│   ├── app.py
-│   ├── requirements.txt
-│   └── Dockerfile
+│   ├── app.py               # Flask REST API приложение
+│   ├── requirements.txt     # Python зависимости
+│   ├── Dockerfile           # Образ для Flask
+│   └── .dockerignore        # Исключения для Docker
 ├── nginx/
-│   ├── nginx.conf
-│   └── Dockerfile
+│   ├── nginx.conf           # Конфигурация reverse proxy
+│   ├── Dockerfile           # Образ для Nginx
+│   └── .dockerignore        # Исключения для Docker
 ├── mysql/
-│   └── init.sql
-└── docker-compose.yml (опционально для сравнения)
+│   └── init.sql             # Инициализация БД и тестовые данные
+├── docker-compose.yml       # Оркестрация всех сервисов
+├── Makefile                 # Удобные команды управления
+├── .env.example             # Шаблон переменных окружения
+├── .gitignore               # Исключения для Git
+├── LICENSE                  # MIT лицензия
+└── README.md
 ```
 
-## 1. Flask приложение
+## Быстрый старт
 
-### app/app.py
-### app/requirements.txt
-### app/Dockerfile
+### Требования
 
-## 2. Nginx конфигурация
-### nginx/nginx.conf
-### nginx/Dockerfile
+- [Docker](https://docs.docker.com/get-docker/) >= 20.10
+- [Docker Compose](https://docs.docker.com/compose/install/) >= 2.0
 
-## 3. MySQL настройка
-### mysql/init.sql
+### Запуск
 
-## 4. Пошаговая ручная настройка
+```bash
+# 1. Клонируйте репозиторий
+git clone https://github.com/KarpenkoDima/Docker-Flask-Nginx-MySQL.git
+cd Docker-Flask-Nginx-MySQL
+
+# 2. (Опционально) Настройте переменные окружения
+cp .env.example .env
+# Отредактируйте .env при необходимости
+
+# 3. Запустите все сервисы
+docker compose up -d --build
+
+# 4. Проверьте статус
+docker compose ps
+```
+
+Приложение будет доступно на `http://localhost:8080`
+
+## API Endpoints
+
+| Метод  | URL             | Описание                    |
+|--------|-----------------|-----------------------------|
+| `GET`  | `/`             | Health check приложения     |
+| `GET`  | `/health`       | Проверка подключения к БД   |
+| `GET`  | `/users`        | Получить всех пользователей |
+| `POST` | `/users`        | Добавить пользователя       |
+| `GET`  | `/nginx-health` | Health check Nginx          |
+
+### Примеры запросов
+
+```bash
+# Проверка работы
+curl http://localhost:8080/
+
+# Статус БД
+curl http://localhost:8080/health
+
+# Список пользователей
+curl http://localhost:8080/users
+
+# Добавить пользователя
+curl -X POST http://localhost:8080/users \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Тест Тестов", "email": "test@example.com"}'
+```
+
+## Makefile команды
+
+```bash
+make help           # Показать все доступные команды
+make up             # Запустить все сервисы
+make down           # Остановить все сервисы
+make build          # Пересобрать и запустить
+make restart        # Перезапустить сервисы
+make logs           # Логи всех сервисов
+make logs-flask     # Логи Flask
+make logs-nginx     # Логи Nginx
+make logs-mysql     # Логи MySQL
+make status         # Статус контейнеров
+make shell-flask    # Shell в Flask контейнере
+make shell-mysql    # MySQL CLI
+make test           # Тест API endpoints
+make clean          # Остановить и удалить volumes
+```
+
+## Стек технологий
+
+| Компонент    | Технология       | Версия  | Назначение              |
+|--------------|------------------|---------|-------------------------|
+| Web-сервер   | Nginx            | Alpine  | Reverse proxy           |
+| Backend      | Flask            | 2.3.3   | REST API                |
+| Язык         | Python           | 3.11    | Среда выполнения        |
+| База данных  | MySQL            | 8.0     | Хранение данных         |
+| Контейнеры   | Docker           | latest  | Контейнеризация         |
+| Оркестрация  | Docker Compose   | v2      | Управление сервисами    |
+
+## Ручная настройка (без Docker Compose)
+
+<details>
+<summary><b>Развернуть инструкцию по ручному запуску</b></summary>
 
 ### Шаг 1: Создание сети
-```bash
-# Создаем custom bridge сеть
-docker network create --driver bridge myapp-network
 
-# Проверяем созданную сеть
+```bash
+docker network create --driver bridge myapp-network
 docker network ls
-docker network inspect myapp-network
 ```
 
-### Шаг 2: Запуск MySQL контейнера
+### Шаг 2: Запуск MySQL
+
 ```bash
-# Запускаем MySQL
 docker run -d \
   --name mysql-container \
   --network myapp-network \
@@ -55,21 +167,17 @@ docker run -d \
   -p 3306:3306 \
   mysql:8.0
 
-# Проверяем статус
-docker ps
-docker logs mysql-container
-
-# Ждем пока MySQL полностью запустится
-echo "Ждем запуска MySQL..."
+# Ждём пока MySQL полностью запустится
+echo "Ждём запуска MySQL..."
 sleep 30
+docker logs mysql-container
 ```
 
-### Шаг 3: Сборка и запуск Flask приложения
+### Шаг 3: Сборка и запуск Flask
+
 ```bash
-# Собираем образ Flask приложения
 docker build -t my-flask-app ./app/
 
-# Запускаем Flask контейнер
 docker run -d \
   --name flask-container \
   --network myapp-network \
@@ -80,146 +188,97 @@ docker run -d \
   -p 5000:5000 \
   my-flask-app
 
-# Проверяем логи
 docker logs flask-container
 ```
 
 ### Шаг 4: Сборка и запуск Nginx
+
 ```bash
-# Собираем образ Nginx
 docker build -t my-nginx ./nginx/
 
-# Запускаем Nginx контейнер
 docker run -d \
   --name nginx-container \
   --network myapp-network \
   -p 8080:8080 \
   my-nginx
 
-# Проверяем логи
 docker logs nginx-container
 ```
 
-### Шаг 5: Проверка работы системы
+### Шаг 5: Проверка
+
 ```bash
-# Проверяем все контейнеры
 docker ps
-
-# Проверяем сеть
-docker network inspect myapp-network
-
-# Тестируем приложение
-curl http://localhost/
-curl http://localhost/health
-curl http://localhost/users
-
-# Добавляем нового пользователя
-curl -X POST http://localhost/users \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Тест Тестов", "email": "test@example.com"}'
+curl http://localhost:8080/
+curl http://localhost:8080/health
+curl http://localhost:8080/users
 ```
 
-## 5. Отладка и мониторинг
+### Остановка и удаление
 
-### Проверка подключений между контейнерами
 ```bash
-# Заходим в Flask контейнер и проверяем сеть
-docker exec -it flask-container bash
-
-# Внутри контейнера проверяем доступность MySQL
-ping mysql-container
-nslookup mysql-container
-
-# Заходим в Nginx контейнер
-docker exec -it nginx-container sh
-
-# Проверяем доступность Flask
-wget -qO- http://flask-container:5000/health
-```
-
-### Просмотр логов
-```bash
-# Логи каждого сервиса
-docker logs -f mysql-container
-docker logs -f flask-container  
-docker logs -f nginx-container
-
-# Все логи одновременно (в разных терминалах)
-docker logs -f mysql-container &
-docker logs -f flask-container &
-docker logs -f nginx-container &
-```
-
-### Подключение к MySQL для отладки
-```bash
-# Подключаемся к MySQL
-docker exec -it mysql-container mysql -u myuser -pmypassword myapp
-
-# SQL команды для проверки
-SHOW TABLES;
-SELECT * FROM users;
-DESCRIBE users;
-```
-
-## 6. Управление контейнерами
-
-### Остановка системы
-```bash
-# Остановка контейнеров
 docker stop nginx-container flask-container mysql-container
-
-# Удаление контейнеров
 docker rm nginx-container flask-container mysql-container
-
-# Удаление сети
 docker network rm myapp-network
-
-# Удаление образов (опционально)
-docker rmi my-nginx my-flask-app mysql:8.0
 ```
 
-### Перезапуск отдельных сервисов
-```bash
-# Перезапуск только Flask приложения
-docker stop flask-container
-docker rm flask-container
-docker run -d \
-  --name flask-container \
-  --network myapp-network \
-  -e DB_HOST=mysql-container \
-  -e DB_USER=myuser \
-  -e DB_PASSWORD=mypassword \
-  -e DB_NAME=myapp \
-  -p 5000:5000 \
-  my-flask-app
-```
+</details>
 
-## 7. Полезные команды для диагностики
+## Отладка
+
+<details>
+<summary><b>Полезные команды для диагностики</b></summary>
+
+### Логи сервисов
 
 ```bash
-# Информация о ресурсах
-docker stats
-
-# Детальная информация о контейнере
-docker inspect mysql-container
-
-# Процессы внутри контейнера
-docker top flask-container
-
-# Использование дискового пространства
-docker system df
-
-# Очистка неиспользуемых ресурсов
-docker system prune -f
+docker compose logs -f              # Все сервисы
+docker compose logs -f flask        # Только Flask
+docker compose logs -f mysql        # Только MySQL
+docker compose logs -f nginx        # Только Nginx
 ```
 
-## Объяснение ключевых моментов
+### Подключение к контейнерам
 
-1. **Сеть**: Создали custom bridge сеть для изоляции и именования контейнеров
-2. **Зависимости**: Flask приложение ждет готовности MySQL с повторными попытками
-3. **Переменные окружения**: Используем для конфигурации без хардкода
-4. **Безопасность**: Создаем непривилегированных пользователей в контейнерах
-5. **Логирование**: Настроили логи для отладки
-6. **Health checks**: Добавили эндпоинты для проверки состояния
+```bash
+# Flask shell
+docker compose exec flask bash
 
-Этот пример показывает полную ручную настройку Docker окружения без docker-compose, с пониманием каждого шага!
+# Nginx shell
+docker compose exec nginx sh
+
+# MySQL CLI
+docker compose exec mysql mysql -u myuser -pmypassword myapp
+```
+
+### Проверка подключений
+
+```bash
+# Из Flask контейнера
+docker compose exec flask bash -c "ping -c 3 mysql-container"
+
+# Из Nginx контейнера
+docker compose exec nginx wget -qO- http://flask-container:5000/health
+```
+
+### Мониторинг ресурсов
+
+```bash
+docker stats                    # Использование CPU/RAM
+docker compose ps               # Статус контейнеров
+docker system df                # Дисковое пространство
+```
+
+</details>
+
+## Ключевые решения
+
+- **Custom bridge network** -- изоляция сервисов и DNS-резолвинг по имени контейнера
+- **Health checks** -- MySQL healthcheck в docker-compose гарантирует, что Flask запустится только после готовности БД
+- **Retry-логика** -- Flask приложение повторяет подключение к БД до 10 раз с интервалом 2 секунды
+- **Unprivileged users** -- контейнеры работают от непривилегированных пользователей (`appuser`, `nginx`)
+- **Переменные окружения** -- конфигурация через `.env` файл без хардкода
+
+## Лицензия
+
+Этот проект распространяется под лицензией [MIT](LICENSE).
